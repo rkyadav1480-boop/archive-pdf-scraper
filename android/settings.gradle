@@ -1,0 +1,2 @@
+// settings.gradle for Flutter SDK configuration
+include ':app'
