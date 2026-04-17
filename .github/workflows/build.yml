@@ -1,61 +1,41 @@
-name: Build Archive PDF Scraper APK
+name: Build APK
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
-  workflow_dispatch:   # Manual trigger bhi allowed hai
+push:
+branches: [ main ]
 
 jobs:
-  build-apk:
-    name: Build Flutter APK
-    runs-on: ubuntu-latest
+build:
+runs-on: ubuntu-latest
 
-    steps:
-      # ── 1. Code checkout ──────────────────────────────────────
-      - name: Checkout repository
-        uses: actions/checkout@v4
+steps:
+- name: 📥 Checkout Code
+  uses: actions/checkout@v3
 
-      # ── 2. Java setup (Flutter needs Java 17) ─────────────────
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+- name: ⚙️ Setup Flutter
+  uses: subosito/flutter-action@v2
+  with:
+    flutter-version: '3.22.0'
 
-      # ── 3. Flutter setup ──────────────────────────────────────
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.22.0'
-          channel: 'stable'
-          cache: true
+- name: 🔍 Flutter Doctor
+  run: flutter doctor
 
-      # ── 4. Dependencies install ───────────────────────────────
-      - name: Install Flutter dependencies
-        run: flutter pub get
+- name: 🧹 Flutter Clean
+  run: flutter clean
 
-      # ── 5. Code analysis (optional but good) ──────────────────
-      - name: Analyze code
-        run: flutter analyze --no-fatal-infos
-        continue-on-error: true
+- name: 📦 Get Dependencies
+  run: flutter pub get
 
-      # ── 6. Build APK ──────────────────────────────────────────
-      - name: Build release APK
-        run: flutter build apk --release --no-shrink
+- name: 🔧 Clean Gradle
+  run: |
+    cd android
+    ./gradlew clean
 
-      # ── 7. Upload APK as artifact ─────────────────────────────
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Archive-PDF-Scraper-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 30
+- name: 🏗️ Build APK
+  run: flutter build apk --release
 
-      # ── 8. Show APK size ──────────────────────────────────────
-      - name: Show APK info
-        run: |
-          echo "✅ APK build successful!"
-          ls -lh build/app/outputs/flutter-apk/app-release.apk
-          echo "📦 APK size: $(du -sh build/app/outputs/flutter-apk/app-release.apk | cut -f1)"
+- name: 📤 Upload APK
+  uses: actions/upload-artifact@v3
+  with:
+    name: app-release
+    path: build/app/outputs/flutter-apk/app-release.apk
