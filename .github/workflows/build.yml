@@ -1,41 +1,47 @@
-name: Build APK
+name: Build Archive PDF Scraper APK
 
 on:
-push:
-branches: [ main ]
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
-build:
-runs-on: ubuntu-latest
+  build-apk:
+    name: Build Flutter APK
+    runs-on: ubuntu-latest
 
-steps:
-- name: 📥 Checkout Code
-  uses: actions/checkout@v3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-- name: ⚙️ Setup Flutter
-  uses: subosito/flutter-action@v2
-  with:
-    flutter-version: '3.22.0'
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-- name: 🔍 Flutter Doctor
-  run: flutter doctor
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.5'
+          channel: 'stable'
+          cache: true
 
-- name: 🧹 Flutter Clean
-  run: flutter clean
+      - name: Flutter version check
+        run: flutter --version
 
-- name: 📦 Get Dependencies
-  run: flutter pub get
+      - name: Install dependencies
+        run: flutter pub get
 
-- name: 🔧 Clean Gradle
-  run: |
-    cd android
-    ./gradlew clean
+      - name: Build APK
+        run: flutter build apk --release
 
-- name: 🏗️ Build APK
-  run: flutter build apk --release
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Archive-PDF-Scraper-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
 
-- name: 📤 Upload APK
-  uses: actions/upload-artifact@v3
-  with:
-    name: app-release
-    path: build/app/outputs/flutter-apk/app-release.apk
+      - name: APK size
+        run: ls -lh build/app/outputs/flutter-apk/app-release.apk
